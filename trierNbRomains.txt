@@ -1,0 +1,255 @@
+NewLine:         .EQUATE     0x000A
+Zero:            .EQUATE     0x0000
+Un:              .EQUATE     0x0001
+Deux:            .EQUATE     0x0002
+taille:          .EQUATE     0x0014
+M:               .EQUATE     0x4D
+D:               .EQUATE     0x44
+C:               .EQUATE     0x43
+L:               .EQUATE     0x4C
+X:               .EQUATE     0x58
+V:               .EQUATE     0x56
+I:               .EQUATE     0x49
+
+main:            CALL        saisir
+                 CALL        afficher
+                 LDX         TabLine,d 
+                 STX         ligneP,d 
+                 CALL        romain
+                 DECO        valLign1,d
+                 STOP
+
+
+saisir:          LDX         TabLine,d
+loop:            CHARI       char,d
+                 LDA         Zero,i
+                 LDBYTEA     char,d
+                 CPA         NewLine,i
+                 BREQ        nextLine
+loop2:           STBYTEA     Zero,x
+                 LDA         cptChar,d
+                 ADDA        Un,i
+                 STA         cptChar,d
+                 ADDX        Un,i
+                 CPA         taille,i
+                 BRGE        nextLine
+                 BR          loop
+
+nextLine:        LDA         Zero,i
+                 STBYTEA     Zero,x
+                 STA         cptChar,d         
+                 LDX         ligne,d
+                 ADDX        Deux,i
+                 CPA         taille,i
+                 BREQ        finSai
+
+                 STX         ligne,d
+                 LDX         TabLine,x
+                 LDA         cptLigne,d 
+                 ADDA        Un,i
+                 STA         cptLigne,d
+                 CHARI       char,d
+                 LDA         Zero,i
+                 LDBYTEA     char,d
+                 CPA         NewLine,i
+                 BREQ        finSai
+                 BR          loop2
+
+finSai:          RET0        
+
+
+afficher:        LDA         Zero,i
+                 LDX         Zero,i
+loop3:           LDX         TabLine,x 
+                 STX         ligneP,d 
+                 CPA         cptLigne,d
+                 BREQ        finAff
+                 STRO        ligneP,n 
+                 CHARO       NewLine,i
+                 ADDA        Un,i
+                 STA         tampon,d
+                 LDX         tampon,d
+                 ASLX                
+                 BR          loop3
+finAff:          RET0
+
+
+romain:          LDA         Zero,i
+                 STA         valLign1,d
+                 LDX         ligneP,d
+                 LDBYTEA     Zero,x
+millier:         CPA         M,i
+                 BRNE        centD
+                 LDBYTEA     Un,x
+                 CPA         M,i
+                 BRNE        m1
+                 LDBYTEA     Deux,x
+                 BRNE        m2
+m3:              LDA         valLign1,d
+                 ADDA        3000,i
+                 STA         valLign1,d
+                 ADDX        3,i
+                 BR          centD 
+m2:              LDA         valLign1,d
+                 ADDA        2000,i
+                 STA         valLign1,d
+                 ADDX        2,i
+                 BR          centD
+m1:              LDA         valLign1,d
+                 ADDA        1000,i
+                 STA         valLign1,d
+                 ADDX        1,i
+                 BR          centD 
+centD:           LDA         Zero,i
+                 LDBYTEA     Zero,x
+                 CPA         D,i
+                 BRNE        centC
+                 LDBYTEA     Un,x
+                 CPA         C,i
+                 BRNE        c5
+                 LDBYTEA     Deux,x
+                 CPA         C,i
+                 BRNE        c6
+                 LDBYTEA     3,x
+                 CPA         C,i
+                 BRNE        c7
+                 BR          c8                        
+
+centC:           CPA         C,i
+                 BRNE        dixL
+                 LDBYTEA     Un,x
+                 CPA         M,i
+                 BREQ        c9
+                 CPA         D,i
+                 BREQ        c4
+                 CPA         C,i
+                 BRNE        c1
+                 LDBYTEA     Deux,i
+                 CPA         C,i
+                 BRNE        c2
+                 BR          c3
+                 
+
+c9:              LDA         valLign1,d
+                 ADDA        900,i
+                 STA         valLign1,d
+                 ADDX        2,i
+                 BR          dixL 
+c8:              LDA         valLign1,d
+                 ADDA        800,i
+                 STA         valLign1,d
+                 ADDX        4,i
+                 BR          dixL 
+c7:              LDA         valLign1,d
+                 ADDA        700,i
+                 STA         valLign1,d
+                 ADDX        3,i
+                 BR          dixL
+c6:              LDA         valLign1,d
+                 ADDA        600,i
+                 STA         valLign1,d
+                 ADDX        2,i
+                 BR          dixL
+c5:              LDA         valLign1,d
+                 ADDA        500,i
+                 STA         valLign1,d
+                 ADDX        1,i
+                 BR          dixL
+c4:              LDA         valLign1,d
+                 ADDA        400,i
+                 STA         valLign1,d
+                 ADDX        2,i
+                 BR          dixL
+c3:              LDA         valLign1,d
+                 ADDA        300,i
+                 STA         valLign1,d
+                 ADDX        3,i
+                 BR          dixL
+c2:              LDA         valLign1,d
+                 ADDA        200,i
+                 STA         valLign1,d
+                 ADDX        2,i
+                 BR          dixL
+c1:              LDA         valLign1,d
+                 ADDA        100,i
+                 STA         valLign1,d
+                 ADDX        1,i
+                 BR          dixL
+
+dixL:            ADDA        1,i 
+                 RET0
+
+
+
+char:            .BLOCK      2
+cptChar:         .BLOCK      2
+ligne:           .BLOCK      2
+cptLigne:        .BLOCK      2
+tampon:          .BLOCK      2
+valLign1:        .BLOCK      2
+valLign0:        .BLOCK      2
+ligneP:          .ADDRSS     ligne00
+ligneP2:         .ADDRSS     ligne01 
+TabLine:         .ADDRSS     ligne00
+                 .ADDRSS     ligne01
+                 .ADDRSS     ligne02
+                 .ADDRSS     ligne03
+                 .ADDRSS     ligne04
+                 .ADDRSS     ligne05
+                 .ADDRSS     ligne06
+                 .ADDRSS     ligne07
+                 .ADDRSS     ligne08
+                 .ADDRSS     ligne09
+                 .ADDRSS     ligne10
+                 .ADDRSS     ligne11
+                 .ADDRSS     ligne12
+                 .ADDRSS     ligne13
+                 .ADDRSS     ligne14
+                 .ADDRSS     ligne15
+                 .ADDRSS     ligne16
+                 .ADDRSS     ligne17
+                 .ADDRSS     ligne18
+                 .ADDRSS     ligne19
+                 .ADDRSS     ligne20
+                 .ADDRSS     ligne21
+                 .ADDRSS     ligne22
+                 .ADDRSS     ligne23
+                 .ADDRSS     ligne24
+                 .ADDRSS     ligne25
+                 .ADDRSS     ligne26
+                 .ADDRSS     ligne27
+                 .ADDRSS     ligne28
+                 .ADDRSS     ligne29
+ligne00:          .BLOCK      20
+ligne01:          .BLOCK      20
+ligne02:          .BLOCK      20
+ligne03:          .BLOCK      20
+ligne04:          .BLOCK      20
+ligne05:          .BLOCK      20
+ligne06:          .BLOCK      20
+ligne07:          .BLOCK      20
+ligne08:          .BLOCK      20
+ligne09:          .BLOCK      20
+ligne10:          .BLOCK      20
+ligne11:          .BLOCK      20
+ligne12:          .BLOCK      20
+ligne13:          .BLOCK      20
+ligne14:          .BLOCK      20
+ligne15:          .BLOCK      20
+ligne16:          .BLOCK      20
+ligne17:          .BLOCK      20
+ligne18:          .BLOCK      20
+ligne19:          .BLOCK      20
+ligne20:          .BLOCK      20
+ligne21:          .BLOCK      20
+ligne22:          .BLOCK      20
+ligne23:          .BLOCK      20
+ligne24:          .BLOCK      20
+ligne25:          .BLOCK      20
+ligne26:          .BLOCK      20
+ligne27:          .BLOCK      20
+ligne28:          .BLOCK      20
+ligne29:          .BLOCK      20
+
+
+                 .END
