@@ -2,7 +2,7 @@ NewLine:         .EQUATE     0x000A
 Zero:            .EQUATE     0x0000
 Un:              .EQUATE     0x0001
 Deux:            .EQUATE     0x0002
-taille:          .EQUATE     0x0014
+taille:          .EQUATE     0x003C
 M:               .EQUATE     0x4D
 D:               .EQUATE     0x44
 C:               .EQUATE     0x43
@@ -51,6 +51,7 @@ nextLine:        LDA         Zero,i
                  CHARI       char,d
                  LDA         Zero,i
                  LDBYTEA     char,d
+                 BREQ        finSai
                  CPA         NewLine,i
                  BREQ        finSai
                  BR          loop2
@@ -84,6 +85,7 @@ millier:         CPA         M,i
                  CPA         M,i
                  BRNE        m1
                  LDBYTEA     Deux,x
+                 CPA         M,i
                  BRNE        m2
 m3:              LDA         valLign1,d
                  ADDA        3000,i
@@ -124,7 +126,7 @@ centC:           CPA         C,i
                  BREQ        c4
                  CPA         C,i
                  BRNE        c1
-                 LDBYTEA     Deux,i
+                 LDBYTEA     Deux,x
                  CPA         C,i
                  BRNE        c2
                  BR          c3
@@ -176,8 +178,160 @@ c1:              LDA         valLign1,d
                  ADDX        1,i
                  BR          dixL
 
-dixL:            ADDA        1,i 
-                 RET0
+dixL:            LDA         Zero,i
+                 LDBYTEA     Zero,x
+                 CPA         L,i
+                 BRNE        dixX
+                 LDBYTEA     Un,x
+                 CPA         X,i
+                 BRNE        d5
+                 LDBYTEA     Deux,x
+                 CPA         X,i
+                 BRNE        d6
+                 LDBYTEA     3,x
+                 CPA         X,i
+                 BRNE        d7
+                 BR          d8
+dixX:            CPA         X,i
+                 BRNE        unV
+                 LDBYTEA     Un,x
+                 CPA         C,i
+                 BREQ        d9
+                 CPA         L,i
+                 BREQ        d4
+                 CPA         X,i
+                 BRNE        d1
+                 LDBYTEA     Deux,x
+                 CPA         X,i
+                 BRNE        d2
+                 BR          d3
+
+d1:              LDA         valLign1,d
+                 ADDA        10,i
+                 STA         valLign1,d
+                 ADDX        1,i
+                 BR          unV
+d2:              LDA         valLign1,d
+                 ADDA        20,i
+                 STA         valLign1,d
+                 ADDX        2,i
+                 BR          unV
+d3:              LDA         valLign1,d
+                 ADDA        30,i
+                 STA         valLign1,d
+                 ADDX        3,i
+                 BR          unV
+d4:              LDA         valLign1,d
+                 ADDA        40,i
+                 STA         valLign1,d
+                 ADDX        2,i
+                 BR          unV
+d5:              LDA         valLign1,d
+                 ADDA        50,i
+                 STA         valLign1,d
+                 ADDX        1,i
+                 BR          unV
+d6:              LDA         valLign1,d
+                 ADDA        60,i
+                 STA         valLign1,d
+                 ADDX        2,i
+                 BR          unV
+d7:              LDA         valLign1,d
+                 ADDA        70,i
+                 STA         valLign1,d
+                 ADDX        3,i
+                 BR          unV
+d8:              LDA         valLign1,d
+                 ADDA        80,i
+                 STA         valLign1,d
+                 ADDX        4,i
+                 BR          unV
+d9:              LDA         valLign1,d
+                 ADDA        90,i
+                 STA         valLign1,d
+                 ADDX        2,i
+                 BR          unV
+
+unV:             LDA         Zero,i
+                 LDBYTEA     Zero,x
+                 CPA         V,i
+                 BRNE        unI
+                 LDBYTEA     Un,x
+                 CPA         I,i
+                 BRNE        u5
+                 LDBYTEA     Deux,x
+                 CPA         I,i
+                 BRNE        u6
+                 LDBYTEA     3,x
+                 CPA         I,i
+                 BRNE        u7
+                 BR          u8
+unI:             CPA         I,i 
+                 BRNE        finSTR
+                 LDBYTEA     Un,x
+                 CPA         X,i
+                 BREQ        u9
+                 CPA         V,i
+                 BREQ        u4
+                 CPA         I,i
+                 BRNE        u1
+                 LDBYTEA     Deux,x
+                 CPA         I,i
+                 BRNE        u2
+                 BR          u3
+
+u1:              LDA         valLign1,d
+                 ADDA        1,i
+                 STA         valLign1,d
+                 ADDX        1,i
+                 BR          finSTR
+u2:              LDA         valLign1,d
+                 ADDA        2,i
+                 STA         valLign1,d
+                 ADDX        2,i
+                 BR          finSTR
+u3:              LDA         valLign1,d
+                 ADDA        3,i
+                 STA         valLign1,d
+                 ADDX        3,i
+                 BR          finSTR
+u4:              LDA         valLign1,d
+                 ADDA        4,i
+                 STA         valLign1,d
+                 ADDX        2,i
+                 BR          finSTR
+u5:              LDA         valLign1,d
+                 ADDA        5,i
+                 STA         valLign1,d
+                 ADDX        1,i
+                 BR          finSTR
+u6:              LDA         valLign1,d
+                 ADDA        6,i
+                 STA         valLign1,d
+                 ADDX        2,i
+                 BR          finSTR
+u7:              LDA         valLign1,d
+                 ADDA        7,i
+                 STA         valLign1,d
+                 ADDX        3,i
+                 BR          finSTR
+u8:              LDA         valLign1,d
+                 ADDA        8,i
+                 STA         valLign1,d
+                 ADDX        4,i
+                 BR          finSTR
+u9:              LDA         valLign1,d
+                 ADDA        9,i
+                 STA         valLign1,d
+                 ADDX        2,i
+                 BR          finSTR
+
+finSTR:          LDA         Zero,i
+                 LDBYTEA     Zero,x
+                 BREQ        finRome
+                 LDA         -1,i
+                 STA         valLign1,d
+finRome:         RET0
 
 
 
