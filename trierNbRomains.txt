@@ -2,7 +2,8 @@ NewLine:         .EQUATE     0x000A
 Zero:            .EQUATE     0x0000
 Un:              .EQUATE     0x0001
 Deux:            .EQUATE     0x0002
-taille:          .EQUATE     0x003C
+tailleL:         .EQUATE     16
+tailleT:         .EQUATE     20
 M:               .EQUATE     0x4D
 D:               .EQUATE     0x44
 C:               .EQUATE     0x43
@@ -31,7 +32,7 @@ loop2:           STBYTEA     Zero,x
                  ADDA        Un,i
                  STA         cptChar,d
                  ADDX        Un,i
-                 CPA         taille,i
+                 CPA         tailleL,i 
                  BRGE        nextLine
                  BR          loop
 
@@ -40,8 +41,8 @@ nextLine:        LDA         Zero,i
                  STA         cptChar,d         
                  LDX         ligne,d
                  ADDX        Deux,i
-                 CPA         taille,i
-                 BREQ        finSai
+                 CPX         tailleT,i 
+                 BREQ        finProg
 
                  STX         ligne,d
                  LDX         TabLine,x
@@ -57,20 +58,19 @@ nextLine:        LDA         Zero,i
                  BR          loop2
 
 finSai:          RET0        
+finProg:         STRO        msgErr,d 
+                 STOP
 
 
 afficher:        LDA         Zero,i
-                 LDX         Zero,i
-loop3:           LDX         TabLine,x 
-                 STX         ligneP,d 
+                 LDX         TabLine,d 
+loop3:           STX         ligneP,d                 
                  CPA         cptLigne,d
                  BREQ        finAff
-                 STRO        ligneP,n 
-                 CHARO       NewLine,i
+                 STRO        ligneP,n
                  ADDA        Un,i
-                 STA         tampon,d
-                 LDX         tampon,d
-                 ASLX                
+                 ADDX        tailleL,i
+                 CHARO       NewLine,i
                  BR          loop3
 finAff:          RET0
 
@@ -342,9 +342,9 @@ cptLigne:        .BLOCK      2
 tampon:          .BLOCK      2
 valLign1:        .BLOCK      2
 valLign0:        .BLOCK      2
-ligneP:          .ADDRSS     ligne00
-ligneP2:         .ADDRSS     ligne01 
-TabLine:         .ADDRSS     ligne00
+ligneP:          .ADDRSS     TabLine 
+ligneP2:         .ADDRSS     TabLine 
+TabLine:         .ADDRSS     ligne00 
                  .ADDRSS     ligne01
                  .ADDRSS     ligne02
                  .ADDRSS     ligne03
@@ -364,46 +364,26 @@ TabLine:         .ADDRSS     ligne00
                  .ADDRSS     ligne17
                  .ADDRSS     ligne18
                  .ADDRSS     ligne19
-                 .ADDRSS     ligne20
-                 .ADDRSS     ligne21
-                 .ADDRSS     ligne22
-                 .ADDRSS     ligne23
-                 .ADDRSS     ligne24
-                 .ADDRSS     ligne25
-                 .ADDRSS     ligne26
-                 .ADDRSS     ligne27
-                 .ADDRSS     ligne28
-                 .ADDRSS     ligne29
-ligne00:          .BLOCK      20
-ligne01:          .BLOCK      20
-ligne02:          .BLOCK      20
-ligne03:          .BLOCK      20
-ligne04:          .BLOCK      20
-ligne05:          .BLOCK      20
-ligne06:          .BLOCK      20
-ligne07:          .BLOCK      20
-ligne08:          .BLOCK      20
-ligne09:          .BLOCK      20
-ligne10:          .BLOCK      20
-ligne11:          .BLOCK      20
-ligne12:          .BLOCK      20
-ligne13:          .BLOCK      20
-ligne14:          .BLOCK      20
-ligne15:          .BLOCK      20
-ligne16:          .BLOCK      20
-ligne17:          .BLOCK      20
-ligne18:          .BLOCK      20
-ligne19:          .BLOCK      20
-ligne20:          .BLOCK      20
-ligne21:          .BLOCK      20
-ligne22:          .BLOCK      20
-ligne23:          .BLOCK      20
-ligne24:          .BLOCK      20
-ligne25:          .BLOCK      20
-ligne26:          .BLOCK      20
-ligne27:          .BLOCK      20
-ligne28:          .BLOCK      20
-ligne29:          .BLOCK      20
 
-
+ligne00:         .BLOCK      16
+ligne01:         .BLOCK      16
+ligne02:         .BLOCK      16
+ligne03:         .BLOCK      16
+ligne04:         .BLOCK      16
+ligne05:         .BLOCK      16
+ligne06:         .BLOCK      16
+ligne07:         .BLOCK      16
+ligne08:         .BLOCK      16
+ligne09:         .BLOCK      16
+ligne10:         .BLOCK      16
+ligne11:         .BLOCK      16
+ligne12:         .BLOCK      16
+ligne13:         .BLOCK      16
+ligne14:         .BLOCK      16
+ligne15:         .BLOCK      16
+ligne16:         .BLOCK      16
+ligne17:         .BLOCK      16
+ligne18:         .BLOCK      16
+ligne19:         .BLOCK      16
+msgErr:         .ASCII      "Le programme ne supporte pas plus de 20 lignes. Desole. \x00"
                  .END
