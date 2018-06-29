@@ -1,9 +1,23 @@
+;Ce programme permet d'entree une serie d'au plus 20 chiffre romains, de les triers en ordre
+;croissant et de les afficher dans cet ordre
+;(chaque chiffre romain possede au plus 15 characteres, a une valeur entre 1 et 3999 (inclusif)
+;sinon ils ne seront pas pris en compte
+;un chiffre romain non valide ne sera pas pris en compte non plus
+;la saisie de plus de 20 lignes cause l'arret du programme 
+
+;auteur: Charles Therien
+;code permanent: THEC03029208
+;courriel: therien.charles@courrier.uqam.ca
+;cour: INF2170 gr 20
+;Remis : 8 juillet 2018
+
 NewLine:         .EQUATE     0x000A
 Zero:            .EQUATE     0x0000
 Un:              .EQUATE     0x0001
 Deux:            .EQUATE     0x0002
 tailleL:         .EQUATE     16
 tailleT:         .EQUATE     20
+valMax:          .EQUATE     3999
 M:               .EQUATE     0x4D
 D:               .EQUATE     0x44
 C:               .EQUATE     0x43
@@ -12,338 +26,464 @@ X:               .EQUATE     0x58
 V:               .EQUATE     0x56
 I:               .EQUATE     0x49
 
-main:            CALL        saisir
+main:            STRO        msgInp,d
+                 CALL        saisir
+                 STRO        msgAffNT,d
                  CALL        afficher
-                 LDX         TabLine,d 
-                 STX         ligneP,d 
-                 CALL        romain
-                 DECO        valLign1,d
+                 CALL        trier
+                 STRO        msgAffT,d
+                 CALL        afficher
                  STOP
 
 
-saisir:          LDX         TabLine,d
-loop:            CHARI       char,d
+;saisir()        permet de saisir jusqu'a tailleT(20) ligne de tailleL-1(15) charactere
+;si une ligne depasse tailleL character, cette ligne sera ignoree
+;si on tente de saisir plus de tailleT(20) lignes, le programme affiche un message d'erreur et
+;s'interrompt
+
+char:            .EQUATE     0            ;#1c
+nbChar:          .EQUATE     1            ;#2d
+saisir:          SUBSP       3,i          ;reserve #nbChar #char
+                 LDX         TabLine,d
                  LDA         Zero,i
-                 LDBYTEA     char,d
+                 STA         nbChar,s
+While00:         CHARI       char,s       ;while((char != '\n' && nextChar != '\n') || nbLigne < 20){
+                 LDBYTEA     char,s       ;   nextChar();
+                 CPA         NewLine,i    ;   if(char = '\n'){    
+                 BRNE        charIn       ;       nextLine(&nbChar);
+                 CALL        nextLine     ;       if(X = 0){
+                 CPX         Zero,i       ;           break;}
+                 BREQ        finWh00      
+                 BR          While00      ;   }else{
+charIn:          STBYTEA     Zero,x       ;       string = string.append(char);    
+                 LDA         nbChar,s
+                 ADDA        Un,i         ;       nbChar++;
+                 CPA         tailleL,i    ;       if(nbChar == tailleL){ 
+                 BRNE        continu
+                 CALL        restLine     ;           restLine(); 
+                 BR          While00
+continu:         STA         nbChar,s     ;       }else{
+                 ADDX        Un,i         ;           X = X+1;
+                 BR          While00      ;   }
+finWh00:         RET3                     ;} depile #nbChar #char
+         
+
+;methode qui change de ligne (si nbChar >0) ou termine la saisie si nbChar == 0
+;X est l'adresse suivante sur laquelle ecrire
+;retourne X = 0 si la saisie doit se terminer, retourne A = 0 sinon
+
+nbChar1:         .EQUATE     4            ;&nbChar
+char1:           .EQUATE     0            ;#1c
+nextLine:        SUBSP       1,i          ;empile #char1
+                 LDA         nbChar1,s    ;if(nbChar1 != 0){
+                 CPA         Zero,i       ;   
+                 BREQ        finSaisi     ; 
+                 LDA         Zero,i       ;
+                 STBYTEA     Zero,x       ;   string.append('\x00');
+                 STA         nbChar1,s    ;   nbChar = 0;
+                 LDX         nbLigne,d    ;
+                 ADDX        Un,i         ;   nbLigne++;
+                 STX         nbLigne,d
+                 CPX         tailleT,i    ;   if(nbLigne < 20){
+                 BREQ        testFinS     ;       X = TabLine[nbLigne];    
+                 ASLX                     ;       return;
+                 LDX         TabLine,x    ;
+                 BR          finNL        ;   }else{
+testFinS:        CHARI       char1,s      ;       if(nextChar() != '\n'){ 
+                 LDBYTEA         char1,s      ;           print(err);
                  CPA         NewLine,i
-                 BREQ        nextLine
-loop2:           STBYTEA     Zero,x
-                 LDA         cptChar,d
-                 ADDA        Un,i
-                 STA         cptChar,d
-                 ADDX        Un,i
-                 CPA         tailleL,i 
-                 BRGE        nextLine
-                 BR          loop
+                 BREQ        finSaisi     ;            STOP; 
+                 STRO        msgErr,d     ;   }
+                 STOP                     ;}else{
+finSaisi:        LDX         Zero,i       ;   X = 0;
+finNL:           RET1                     ;   return;} depile #char1
 
-nextLine:        LDA         Zero,i
-                 STBYTEA     Zero,x
-                 STA         cptChar,d         
-                 LDX         ligne,d
-                 ADDX        Deux,i
-                 CPX         tailleT,i 
-                 BREQ        finProg
 
-                 STX         ligne,d
-                 LDX         TabLine,x
-                 LDA         cptLigne,d 
-                 ADDA        Un,i
-                 STA         cptLigne,d
-                 CHARI       char,d
+;cette methode met compteur de char a 0, met le pointeur d'ecriture (X) au debut de la ligne
+;et termine la lecture de la ligne
+nbChar2:         .EQUATE     5            ;&nbChar
+char2:           .EQUATE     0            ;var local #2d
+restLine:        SUBSP       2,i          ;empile #char2
+                 LDA         Zero,i       
+                 STA         nbChar2,s    ;nbChar = 0;
+                 STA         char2,s      ;char2 = 0; 
+                 LDX         nbLigne,d
+                 ASLX
+                 LDX         TabLine,x    ;X = TabLine[nbLigne];
+While03:         CHARI       char2,s      ;while(char2 != '\n'){
+                 LDBYTEA         char2,s      ;   char2 = nextChar();   
+                 CPA         NewLine,i    ;}
+                 BRNE        While03
+                 RET2                     ;depile #char2
+
+;faite afficher le nombre de ligne indiquer par nbLigne a partir de TabLine
+cptLigne:        .EQUATE     2            ;var local #2d
+pntLigne:        .EQUATE     0            ;var local #2h
+afficher:        SUBSP       4,i          ;empile #cptLigne #pntLigne 
                  LDA         Zero,i
-                 LDBYTEA     char,d
-                 BREQ        finSai
-                 CPA         NewLine,i
-                 BREQ        finSai
-                 BR          loop2
-
-finSai:          RET0        
-finProg:         STRO        msgErr,d 
-                 STOP
-
-
-afficher:        LDA         Zero,i
-                 LDX         TabLine,d 
-loop3:           STX         ligneP,d                 
-                 CPA         cptLigne,d
-                 BREQ        finAff
-                 STRO        ligneP,n
-                 ADDA        Un,i
-                 ADDX        tailleL,i
+                 STA         cptLigne,s   ;cptLigne = 0
+                 LDX         cptLigne,s   
+While01:         CPX         nbLigne,d    ;while(cptLigne != nbLigne){
+                 BREQ        finAff       ;   X = TabLine[cptLigne];
+                 ASLX                     ;
+                 LDX         TabLine,x    ;   println(&X);
+                 STX         pntLigne,s   ;
+                 STRO        pntLigne,sf  ;   cptLigne++;
                  CHARO       NewLine,i
-                 BR          loop3
-finAff:          RET0
+                 LDX         cptLigne,s   ;}
+                 ADDX        Un,i         ;
+                 STX         cptLigne,s   ;return;
+                 BR          While01      ;
+finAff:          RET4                     ;depile #cptLigne #pntLigne 
 
 
-romain:          LDA         Zero,i
-                 STA         valLign1,d
-                 LDX         ligneP,d
-                 LDBYTEA     Zero,x
-millier:         CPA         M,i
-                 BRNE        centD
-                 LDBYTEA     Un,x
-                 CPA         M,i
-                 BRNE        m1
-                 LDBYTEA     Deux,x
-                 CPA         M,i
-                 BRNE        m2
-m3:              LDA         valLign1,d
-                 ADDA        3000,i
-                 STA         valLign1,d
-                 ADDX        3,i
-                 BR          centD 
-m2:              LDA         valLign1,d
-                 ADDA        2000,i
-                 STA         valLign1,d
+;trier tri le tableau TabLine du plus petit au plus grand nombre romain et retire les
+;lignes non valides (en decrementant le compteur de ligne et placant les lignes non valide a la fin
+;(ligne non valide recoivent 0x7FFF comme valeur de romain())
+i:               .EQUATE     10           ;var local #2d
+j:               .EQUATE     8            ;var local #2d
+valeur1:         .EQUATE     6            ;var local #2d
+valeur2:         .EQUATE     4            ;var local #2d
+tampon:          .EQUATE     2            ;var local #2h
+valeur:          .EQUATE     0            ;resultat romain #2d
+trier:           SUBSP       12,i         ;empile #i #j #valeur1 #valeur2 #tampon #resultat
+                 LDA         Zero,i       
+                 STA         i,s;         ;i = 0;
+                 LDA         nbLigne,d
+                 SUBA        Un,i
+                 STA         j,s          ;j = nbLigne-1;
+While02:         LDA         j,s          ;while(j > 0){
+                 BRLE        finWh02      ;   
+While04:         LDX         i,s
+                 CPX         j,s          ;   while(i < j){
+                 BRGE        finWh04
+                 ASLX        
+                 LDX         TabLine,x    ;       X = &TabLine[i]
+                 CALL        romain
+                 LDA         valeur,s
+                 STA         valeur1,s    ;       valeur1 = romain(X)
+                 LDX         i,s
+                 ADDX        Un,i
+                 ASLX
+                 LDX         TabLine,x    ;       X = &TabLine[i+1]
+                 CALL        romain
+                 LDA         valeur,s
+                 STA         valeur2,s    ;       valeur2 = romain(X)
+                 CPA         valeur1,s    ;       if(valeur2 < valeur1){
+                 BRGE        nextComp 
+                 LDX         i,s
+                 ASLX        
+                 LDX         TabLine,x    ;           X = &TabLine[i]
+                 STX         tampon,s     ;           tampon = X
+                 LDX         i,s
+                 ADDX        Un,i 
+                 ASLX
+                 LDA         TabLine,x    ;           A = &TabLine[i+1]
+                 LDX         i,s 
+                 ASLX                     ;           X = i
+                 STA         TabLine,x    ;           &TabLine[i] = &TabLine[i+1] 
                  ADDX        2,i
-                 BR          centD
-m1:              LDA         valLign1,d
+                 LDA         tampon,s     ;           &TabLine[i+1] = tampon
+                 STA         TabLine,x    ;       }
+nextComp:        LDA         i,s          ;   i++;
+                 ADDA        Un,i         ;   }
+                 STA         i,s
+                 BR          While04      ;   j--;
+finWh04:         LDA         j,s
+                 SUBA        Un,i
+                 STA         j,s
+                 LDA         Zero,i       ;   i = 0;
+                 STA         i,s
+                 BR          While02      ;}
+finWh02:         LDA         nbLigne,d    ; i = nbLigne-1;
+                 SUBA        Un,i
+                 STA         i,s
+While05:         CPA         Zero,i       ;while(
+                 BRLT        finWh05      ;       i >= 0 
+                 LDX         i,s
+                 ASLX        
+                 LDX         TabLine,x    ;   
+                 CALL        romain
+                 LDA         valeur,s     
+                 CPA         valMax,i
+                 BRLE        finWh05      ;               && TabLine[i] > 3999){
+                 LDA         nbLigne,d
+                 SUBA        Un,i
+                 STA         nbLigne,d    ;   nbLigne--;
+                 LDA         i,s
+                 SUBA        Un,i
+                 STA         i,s          ;   i--;
+                 BR          While05      ;}
+finWh05:         ADDSP       12,i         ;depile #i #j #valeur1 #valeur2 #tampon #resultat
+                 RET0
+
+
+
+
+;traduit le chiffre romain pointe par X en nombre arabe
+;retourne entre 1 et 3999 en A si le parametre est valide
+;retourn 0x7FFF sinon
+resultat:        .EQUATE     2            ;resultat #2d
+romain:          LDA         Zero,i   
+                 STA         resultat,s   ;resultat = 0
+                 LDBYTEA     Zero,x       ;A = charAt(x)
+millier:         CPA         M,i          ;if(A == 'M'){
+                 BRNE        centD        ;   
+                 LDBYTEA     Un,x         ;   A = charAt(x+1)
+                 CPA         M,i          ;   if(A == 'M'){
+                 BRNE        m1           ;       
+                 LDBYTEA     Deux,x       ;       A = charAt(x+2)
+                 CPA         M,i          ;       if(A == 'M'){
+                 BRNE        m2           ;           resultat += 3000
+m3:              LDA         resultat,s   ;           x += 3
+                 ADDA        3000,i       ;       }else{
+                 STA         resultat,s   ;           resultat += 2000
+                 ADDX        3,i          ;           x += 2
+                 BR          centD        ;       }       
+m2:              LDA         resultat,s   ;   }else{   
+                 ADDA        2000,i       ;       resultat += 1000
+                 STA         resultat,s   ;       x++
+                 ADDX        2,i          ; }
+                 BR          centD        ;}
+m1:              LDA         resultat,s
                  ADDA        1000,i
-                 STA         valLign1,d
+                 STA         resultat,s
                  ADDX        1,i
-                 BR          centD 
-centD:           LDA         Zero,i
-                 LDBYTEA     Zero,x
-                 CPA         D,i
-                 BRNE        centC
-                 LDBYTEA     Un,x
-                 CPA         C,i
-                 BRNE        c5
-                 LDBYTEA     Deux,x
-                 CPA         C,i
-                 BRNE        c6
-                 LDBYTEA     3,x
-                 CPA         C,i
-                 BRNE        c7
-                 BR          c8                        
-
-centC:           CPA         C,i
-                 BRNE        dixL
-                 LDBYTEA     Un,x
-                 CPA         M,i
-                 BREQ        c9
-                 CPA         D,i
-                 BREQ        c4
-                 CPA         C,i
-                 BRNE        c1
-                 LDBYTEA     Deux,x
-                 CPA         C,i
-                 BRNE        c2
-                 BR          c3
-                 
-
-c9:              LDA         valLign1,d
-                 ADDA        900,i
-                 STA         valLign1,d
-                 ADDX        2,i
-                 BR          dixL 
-c8:              LDA         valLign1,d
-                 ADDA        800,i
-                 STA         valLign1,d
-                 ADDX        4,i
-                 BR          dixL 
-c7:              LDA         valLign1,d
+                 BR          centD        ;A = charAt(x)
+centD:           LDA         Zero,i       ;if(A == 'D'){
+                 LDBYTEA     Zero,x       ;   A = charAt(x+1)   
+                 CPA         D,i          ;   if(A == 'C'){
+                 BRNE        centC        ;       A = charAt(x+2)
+                 LDBYTEA     Un,x         ;       if(A == 'C'){
+                 CPA         C,i          ;           A = charAt(x+3)
+                 BRNE        c5           ;           if(A == 'C'){
+                 LDBYTEA     Deux,x       ;               resultat += 800
+                 CPA         C,i          ;               x += 4 
+                 BRNE        c6           ;           }else{
+                 LDBYTEA     3,x          ;               resultat += 700
+                 CPA         C,i          ;               x += 3
+                 BRNE        c7           ;           }
+                 BR          c8           ;       }else{
+                                          ;           resultat += 600
+centC:           CPA         C,i          ;           x += 2
+                 BRNE        dixL         ;       }
+                 LDBYTEA     Un,x         ;   }else{
+                 CPA         M,i          ;       resultat += 500
+                 BREQ        c9           ;       x ++;
+                 CPA         D,i          ;}else if( A == 'C'){
+                 BREQ        c4           ;   A = charAt(x+1)
+                 CPA         C,i          ;   if(A == 'M'){
+                 BRNE        c1           ;       resultat += 900
+                 LDBYTEA     Deux,x       ;       x += 2
+                 CPA         C,i          ;   }else{
+                 BRNE        c2           ;       if(A == 'C'){
+                 BR          c3           ;           A = charAt(x+2)
+                                          ;           if(A == 'C'){
+c9:              LDA         resultat,s   ;               resultat += 300
+                 ADDA        900,i        ;               x += 3
+                 STA         resultat,s   ;           }else{    
+                 ADDX        2,i          ;               resultat += 200
+                 BR          dixL         ;               x += 2
+c8:              LDA         resultat,s   ;           }
+                 ADDA        800,i        ;       }else{
+                 STA         resultat,s   ;           resultat += 100
+                 ADDX        4,i          ;           x++ 
+                 BR          dixL         ;       }
+c7:              LDA         resultat,s   ;}
                  ADDA        700,i
-                 STA         valLign1,d
+                 STA         resultat,s
                  ADDX        3,i
                  BR          dixL
-c6:              LDA         valLign1,d
+c6:              LDA         resultat,s
                  ADDA        600,i
-                 STA         valLign1,d
+                 STA         resultat,s
                  ADDX        2,i
                  BR          dixL
-c5:              LDA         valLign1,d
+c5:              LDA         resultat,s
                  ADDA        500,i
-                 STA         valLign1,d
+                 STA         resultat,s
                  ADDX        1,i
                  BR          dixL
-c4:              LDA         valLign1,d
+c4:              LDA         resultat,s
                  ADDA        400,i
-                 STA         valLign1,d
+                 STA         resultat,s
                  ADDX        2,i
                  BR          dixL
-c3:              LDA         valLign1,d
+c3:              LDA         resultat,s
                  ADDA        300,i
-                 STA         valLign1,d
+                 STA         resultat,s
                  ADDX        3,i
                  BR          dixL
-c2:              LDA         valLign1,d
+c2:              LDA         resultat,s
                  ADDA        200,i
-                 STA         valLign1,d
+                 STA         resultat,s
                  ADDX        2,i
                  BR          dixL
-c1:              LDA         valLign1,d
+c1:              LDA         resultat,s
                  ADDA        100,i
-                 STA         valLign1,d
+                 STA         resultat,s
                  ADDX        1,i
                  BR          dixL
 
-dixL:            LDA         Zero,i
-                 LDBYTEA     Zero,x
-                 CPA         L,i
-                 BRNE        dixX
-                 LDBYTEA     Un,x
-                 CPA         X,i
-                 BRNE        d5
-                 LDBYTEA     Deux,x
-                 CPA         X,i
-                 BRNE        d6
-                 LDBYTEA     3,x
-                 CPA         X,i
-                 BRNE        d7
-                 BR          d8
-dixX:            CPA         X,i
-                 BRNE        unV
-                 LDBYTEA     Un,x
-                 CPA         C,i
-                 BREQ        d9
-                 CPA         L,i
-                 BREQ        d4
-                 CPA         X,i
-                 BRNE        d1
-                 LDBYTEA     Deux,x
-                 CPA         X,i
-                 BRNE        d2
-                 BR          d3
-
-d1:              LDA         valLign1,d
-                 ADDA        10,i
-                 STA         valLign1,d
-                 ADDX        1,i
-                 BR          unV
-d2:              LDA         valLign1,d
-                 ADDA        20,i
-                 STA         valLign1,d
-                 ADDX        2,i
-                 BR          unV
-d3:              LDA         valLign1,d
-                 ADDA        30,i
-                 STA         valLign1,d
+dixL:            LDA         Zero,i       ;A = charAt(x)
+                 LDBYTEA     Zero,x       ;if(A == 'L'){
+                 CPA         L,i          ;   A = charAt(x+1) 
+                 BRNE        dixX         ;   if(A == 'X'){
+                 LDBYTEA     Un,x         ;       A = charAt(x+2)
+                 CPA         X,i          ;       if(A == 'X'){
+                 BRNE        d5           ;           A = charAt(x+3)
+                 LDBYTEA     Deux,x       ;           if(A == 'X'){
+                 CPA         X,i          ;               resultat += 80
+                 BRNE        d6           ;               x += 4
+                 LDBYTEA     3,x          ;           }else{
+                 CPA         X,i          ;               resultat += 70
+                 BRNE        d7           ;               x += 3
+                 BR          d8           ;           }
+dixX:            CPA         X,i          ;       }else{
+                 BRNE        unV          ;           resultat += 60
+                 LDBYTEA     Un,x         ;           x += 2
+                 CPA         C,i          ;       }
+                 BREQ        d9           ;   }else{
+                 CPA         L,i          ;       resultat += 50
+                 BREQ        d4           ;       x ++;
+                 CPA         X,i          ;}else if( A == 'X'){
+                 BRNE        d1           ;   A = charAt(x+1)
+                 LDBYTEA     Deux,x       ;   if(A == 'C'){
+                 CPA         X,i          ;       resultat += 90
+                 BRNE        d2           ;       x += 2
+                 BR          d3           ;   }else{
+                                          ;       if(A == 'X'){
+d1:              LDA         resultat,s   ;           A = charAt(x+2)
+                 ADDA        10,i         ;           if(A == 'X'){
+                 STA         resultat,s   ;               resultat += 30
+                 ADDX        1,i          ;               x += 3
+                 BR          unV          ;           }else{
+d2:              LDA         resultat,s   ;               resultat += 20
+                 ADDA        20,i         ;               x += 2
+                 STA         resultat,s   ;           }
+                 ADDX        2,i          ;       }else{
+                 BR          unV          ;           resultat += 10
+d3:              LDA         resultat,s   ;           x++
+                 ADDA        30,i         ;       }
+                 STA         resultat,s   ;}
                  ADDX        3,i
                  BR          unV
-d4:              LDA         valLign1,d
+d4:              LDA         resultat,s
                  ADDA        40,i
-                 STA         valLign1,d
+                 STA         resultat,s
                  ADDX        2,i
                  BR          unV
-d5:              LDA         valLign1,d
+d5:              LDA         resultat,s
                  ADDA        50,i
-                 STA         valLign1,d
+                 STA         resultat,s
                  ADDX        1,i
                  BR          unV
-d6:              LDA         valLign1,d
+d6:              LDA         resultat,s
                  ADDA        60,i
-                 STA         valLign1,d
+                 STA         resultat,s
                  ADDX        2,i
                  BR          unV
-d7:              LDA         valLign1,d
+d7:              LDA         resultat,s
                  ADDA        70,i
-                 STA         valLign1,d
+                 STA         resultat,s
                  ADDX        3,i
                  BR          unV
-d8:              LDA         valLign1,d
+d8:              LDA         resultat,s
                  ADDA        80,i
-                 STA         valLign1,d
+                 STA         resultat,s
                  ADDX        4,i
                  BR          unV
-d9:              LDA         valLign1,d
+d9:              LDA         resultat,s
                  ADDA        90,i
-                 STA         valLign1,d
+                 STA         resultat,s
                  ADDX        2,i
                  BR          unV
 
-unV:             LDA         Zero,i
-                 LDBYTEA     Zero,x
-                 CPA         V,i
-                 BRNE        unI
-                 LDBYTEA     Un,x
-                 CPA         I,i
-                 BRNE        u5
-                 LDBYTEA     Deux,x
-                 CPA         I,i
-                 BRNE        u6
-                 LDBYTEA     3,x
-                 CPA         I,i
-                 BRNE        u7
-                 BR          u8
-unI:             CPA         I,i 
-                 BRNE        finSTR
-                 LDBYTEA     Un,x
-                 CPA         X,i
-                 BREQ        u9
-                 CPA         V,i
-                 BREQ        u4
-                 CPA         I,i
-                 BRNE        u1
-                 LDBYTEA     Deux,x
-                 CPA         I,i
-                 BRNE        u2
-                 BR          u3
-
-u1:              LDA         valLign1,d
-                 ADDA        1,i
-                 STA         valLign1,d
-                 ADDX        1,i
-                 BR          finSTR
-u2:              LDA         valLign1,d
-                 ADDA        2,i
-                 STA         valLign1,d
-                 ADDX        2,i
-                 BR          finSTR
-u3:              LDA         valLign1,d
-                 ADDA        3,i
-                 STA         valLign1,d
+unV:             LDA         Zero,i       ;A = charAt(x)
+                 LDBYTEA     Zero,x       ;if(A == 'V'){
+                 CPA         V,i          ;   A = charAt(x+1)  
+                 BRNE        unI          ;   if(A == 'I'){
+                 LDBYTEA     Un,x         ;       A = charAt(x+2)
+                 CPA         I,i          ;       if(A == 'I'){
+                 BRNE        u5           ;           A = charAt(x+3)
+                 LDBYTEA     Deux,x       ;           if(A == 'I'){
+                 CPA         I,i          ;               resultat += 8
+                 BRNE        u6           ;               x += 4
+                 LDBYTEA     3,x          ;           }else{
+                 CPA         I,i          ;               resultat += 7
+                 BRNE        u7           ;               x += 3
+                 BR          u8           ;           }
+unI:             CPA         I,i          ;       }else{
+                 BRNE        finSTR       ;           resultat += 6
+                 LDBYTEA     Un,x         ;           x += 2
+                 CPA         X,i          ;       }
+                 BREQ        u9           ;   }else{
+                 CPA         V,i          ;       resultat += 5
+                 BREQ        u4           ;       x ++;
+                 CPA         I,i          ;}else if( A == 'I'){
+                 BRNE        u1           ;   A = charAt(x+1)
+                 LDBYTEA     Deux,x       ;   if(A == 'X'){
+                 CPA         I,i          ;       resultat += 9
+                 BRNE        u2           ;       x += 2
+                 BR          u3           ;   }else{
+                                          ;       if(A == 'I'){
+u1:              LDA         resultat,s   ;           A = charAt(x+2)
+                 ADDA        1,i          ;           if(A == 'I'){
+                 STA         resultat,s   ;               resultat += 3
+                 ADDX        1,i          ;               x += 3
+                 BR          finSTR       ;           }else{ 
+u2:              LDA         resultat,s   ;               resultat += 2
+                 ADDA        2,i          ;               x += 2
+                 STA         resultat,s   ;           }
+                 ADDX        2,i          ;       }else{
+                 BR          finSTR       ;           resultat += 1
+u3:              LDA         resultat,s   ;           x++ 
+                 ADDA        3,i          ;       }
+                 STA         resultat,s   ;}
                  ADDX        3,i
                  BR          finSTR
-u4:              LDA         valLign1,d
+u4:              LDA         resultat,s
                  ADDA        4,i
-                 STA         valLign1,d
+                 STA         resultat,s
                  ADDX        2,i
                  BR          finSTR
-u5:              LDA         valLign1,d
+u5:              LDA         resultat,s
                  ADDA        5,i
-                 STA         valLign1,d
+                 STA         resultat,s
                  ADDX        1,i
                  BR          finSTR
-u6:              LDA         valLign1,d
+u6:              LDA         resultat,s
                  ADDA        6,i
-                 STA         valLign1,d
+                 STA         resultat,s
                  ADDX        2,i
                  BR          finSTR
-u7:              LDA         valLign1,d
+u7:              LDA         resultat,s
                  ADDA        7,i
-                 STA         valLign1,d
+                 STA         resultat,s
                  ADDX        3,i
                  BR          finSTR
-u8:              LDA         valLign1,d
+u8:              LDA         resultat,s
                  ADDA        8,i
-                 STA         valLign1,d
+                 STA         resultat,s
                  ADDX        4,i
                  BR          finSTR
-u9:              LDA         valLign1,d
+u9:              LDA         resultat,s
                  ADDA        9,i
-                 STA         valLign1,d
+                 STA         resultat,s
                  ADDX        2,i
                  BR          finSTR
 
-finSTR:          LDA         Zero,i
-                 LDBYTEA     Zero,x
-                 BREQ        finRome
-                 LDA         -1,i
-                 STA         valLign1,d
+finSTR:          LDA         Zero,i       ;A = charAt(x)
+                 LDBYTEA     Zero,x       ;if(A != 0){
+                 BREQ        finRome      ;   resultat = 0x7FF
+                 LDA         0x7FFF,i     ;}
+                 STA         resultat,s   ;return
 finRome:         RET0
 
 
 
-char:            .BLOCK      2
-cptChar:         .BLOCK      2
-ligne:           .BLOCK      2
-cptLigne:        .BLOCK      2
-tampon:          .BLOCK      2
-valLign1:        .BLOCK      2
-valLign0:        .BLOCK      2
-ligneP:          .ADDRSS     TabLine 
-ligneP2:         .ADDRSS     TabLine 
+
+nbLigne:         .BLOCK      2 
 TabLine:         .ADDRSS     ligne00 
                  .ADDRSS     ligne01
                  .ADDRSS     ligne02
@@ -385,5 +525,8 @@ ligne16:         .BLOCK      16
 ligne17:         .BLOCK      16
 ligne18:         .BLOCK      16
 ligne19:         .BLOCK      16
-msgErr:         .ASCII      "Le programme ne supporte pas plus de 20 lignes. Desole. \x00"
+msgErr:          .ASCII      "Le programme ne supporte pas plus de 20 lignes. \x00"
+msgInp:          .ASCII      "Le texte saisi:\n\x00"
+msgAffNT:        .ASCII      "Fonction Affichage, donnees non triees:\n\x00"
+msgAffT:         .ASCII      "Fonction Affichage, donnees triees:\n\x00"
                  .END
