@@ -100,7 +100,7 @@ finNL:           RET1                     ;   return;} depile #char1
 
 
 ;cette methode met compteur de char a 0, met le pointeur d'ecriture (X) au debut de la ligne
-;et termine la lecture de la ligne
+;termine la lecture de la ligne et affiche un message d'erreur
 nbChar2:         .EQUATE     5            ;&nbChar
 char2:           .EQUATE     0            ;var local #2d
 restLine:        SUBSP       2,i          ;empile #char2
@@ -114,6 +114,7 @@ While03:         CHARI       char2,s      ;while(char2 != '\n'){
                  LDBYTEA         char2,s      ;   char2 = nextChar();   
                  CPA         NewLine,i    ;}
                  BRNE        While03
+                 STRO        msgErrL,d
                  RET2                     ;depile #char2
 
 ;faite afficher le nombre de ligne indiquer par nbLigne a partir de TabLine
@@ -526,6 +527,7 @@ ligne17:         .BLOCK      16
 ligne18:         .BLOCK      16
 ligne19:         .BLOCK      16
 msgErr:          .ASCII      "Le programme ne supporte pas plus de 20 lignes. \x00"
+msgErrL:         .ASCII      "Cette ligne est trop longue, elle sera ignoree.\n\x00"
 msgInp:          .ASCII      "Le texte saisi:\n\x00"
 msgAffNT:        .ASCII      "Fonction Affichage, donnees non triees:\n\x00"
 msgAffT:         .ASCII      "Fonction Affichage, donnees triees:\n\x00"
