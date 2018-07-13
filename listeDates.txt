@@ -1,0 +1,242 @@
+;
+
+;auteur: Charles Therien
+;code permanent: THEC03029208
+;courriel: therien.charles@courrier.uqam.ca
+;cour: INF2170 gr 20
+;Remis : 29 juillet 2018
+
+NewLine:         .EQUATE     0x000A
+Dash:            .EQUATE     0x002D
+tailleD:         .EQUATE     10
+tailleI:         .EQUATE     10
+Ans_Max:         .EQUATE     2500
+Ans_Min:         .EQUATE     1900
+Mois_Max:        .EQUATE     12
+Mois_Min:        .EQUATE     1
+Jour_Max:        .EQUATE     31
+Jour_Min:        .EQUATE     1
+JourMois:        .EQUATE     30
+JourFeNB:        .EQUATE     28
+JourFeBi:        .EQUATE     29
+Char2Dec:        .EQUATE     0x0030
+janvier:         .EQUATE     1
+fevrier:         .EQUATE     2
+mars:            .EQUATE     3
+avril:           .EQUATE     4
+mai:             .EQUATE     5
+juin:            .EQUATE     6
+juillet:         .EQUATE     7
+aout:            .EQUATE     8
+septemb:         .EQUATE     9
+octobre:         .EQUATE     10
+novembre:        .EQUATE     11
+decembre:        .EQUATE     12
+
+;div par 4 _00b, div par 400 _0000b
+
+main:            STRO        msgIntro,d 
+                 CALL        saisir
+;                 CALL        Afficher 
+                 STOP
+
+;Saisir()
+;Cette methode prend les dates entrees par l'utilisateur, les valides et cree une liste chainee de dates valides
+;La methode n'arrete que lorsque l'utilisateur entre deux '\n' de suite.
+input:           .EQUATE     3            ;#1c
+char2x:          .EQUATE     4            ;#1c 
+char3x:          .EQUATE     5            ;#1c
+char4x:          .EQUATE     6            ;#1c
+char5x:          .EQUATE     7            ;#1c
+char6x:          .EQUATE     8            ;#1c
+char7x:          .EQUATE     9            ;#1c
+char8x:          .EQUATE     10           ;#1c
+char9x:          .EQUATE     11           ;#1c
+char0x:          .EQUATE     12           ;#1c
+nbChar:          .EQUATE     1            ;#2d
+char:            .EQUATE     0            ;#1c
+saisir:          SUBSP       13,i         ;reserve #char2x #char3x #char4x #char5x #char6x #char7x #char8x #char9x #char0x #input #nbChar #char 
+                 LDX         0,i
+                 LDA         0,i
+                 STA         nbChar,s
+While00:         CHARI       char,s       ;do{
+                 LDBYTEA     char,s       ;   char = nextChar();
+IF00:            CPA         NewLine,i    ;   if(char == '\n'){
+                 BRNE        IF01         ;       nextDate(input*, nbChar*, char*);
+FINIF00:         CALL        nextDate     ;   } 
+IF01:            LDBYTEA     char,s
+                 LDX         nbChar,s
+                 CPA         NewLine,i    ;   if(char == '\n'){
+                 BREQ        finWh00      ;   
+ELSEIF01:        CPX         tailleI,i    ;   }elseif(nbChar != 10){
+                 BREQ        FINIF01 
+                 STBYTEA     input,sx     ;       input.append(char);
+                 ADDX        1,i          ;       
+                 STX         nbChar,s     ;       nbChar++;
+                 BR          While00      ;   }else{
+ELSE01:          STRO        msgErrIn,d   ;       print(msgErrIn);
+                 CALL        clearLin     ;       clearLin(char*, nbChar*); 
+                 BR          IF01
+FINIF01:         NOP0
+finWh00:         ADDSP       13,i         ; depile #char2x #char3x #char4x #char5x #char6x #char7x #char8x #char9x #char0x #input #nbChar #char  
+                 RET0
+
+;clearLin()
+;cette methode lit le terminal jusqu'a atteindre '\n', met X et nbChar a zero 
+nbChar1:         .EQUATE     3            ;#2d
+char1:           .EQUATE     2            ;#1c
+clearLin:        LDA         0,i 
+                 STA         nbChar1,s    ;nbChar = 0
+while01:         CHARI       char1,s      ;while(nextChar() != '\n'){     
+                 LDBYTEA     char1,s      ;   char = nextChar();
+                 CPA         NewLine,i    ;}
+                 BRNE        while01
+                 RET0                                                  
+
+;nextDate()
+;cette methode prend une chaine de charactere et valide si celle ci est une date valide du format yyyy-mm-jjj
+;si elle est valide, cree une nouvelle structure Date et l'insere dans la liste chainee de Date (ptr1Date)
+;retourne nextChar en &char
+input1:          .EQUATE     11           
+nbChar2:         .EQUATE     9            ;#2d
+char2:           .EQUATE     8            ;#1c
+annee:           .EQUATE     4            ;#2d
+mois:            .EQUATE     2            ;#2d
+jour:            .EQUATE     0            ;#2d
+nextDate:        SUBSP       6,i            ;empile #annee #mois #jour 
+                 LDA         0,i
+                 STA         annee,s      ;annee = 0;
+                 STA         mois,s       ;mois = 0;
+                 STA         jour,s       ;jour = 0;
+                 LDA         nbChar2,s
+                 CPA         tailleI,i    ;if(nbChar == 10){
+                 BRNE        DateNnV      ;   if(valForm){
+                 CALL        valForm      ;       convertD(input, annee*, mois*, jour*); 
+                 CALL        convertD     ;       if(valiD){ 
+ ;                CALL        valiD        ;           newDate(annee, mois, jour);
+                 CPA         0,i          ;       }else{
+                 BREQ        DateNnV      ;           print(msgErrIn);
+  ;               CALL        newDate      ;       }    
+                 BR          FinNxDat     ;   }else{
+                                          ;       print(msgErrIn);
+DateNnV:         STRO        msgErrIn,d   ;   }
+FinNxDat:        CHARI       char2,s      ;}else{ print(msgErrIn); }
+                 LDA         0,i          ;
+                 STA         nbChar2,s    ;nbChar = 0;
+                 LDBYTEA     char2,s      ;char = nextChar();
+                 RET6                     ;depile #annee #mois #jour
+
+
+;retourne 0 en A si le format 'yyyy-mm-jj' n'est pas respecte, 1 en A si oui
+input2:          .EQUATE     13
+valForm:         LDX         0,i
+                 LDA         0,i
+while02:         LDBYTEA     input2,sx    
+                 CALL        estChifr 
+                 BREQ        formErr
+                 ADDX        1,i
+                 CPX         4,i
+finWh02:         BRNE        while02
+                 LDBYTEA     input2,sx
+                 CPA         Dash,i
+                 BRNE        formErr
+                 ADDX        1,i
+while03:         LDBYTEA     input2,sx
+                 CALL        estChifr
+                 BREQ        formErr
+                 ADDX        1,i 
+                 CPX         7,i
+finWh03:         BRNE        while03
+                 LDBYTEA     input2,sx
+                 CPA         Dash,i
+                 BRNE        formErr
+                 ADDX        1,i
+while04:         LDBYTEA     input2,sx
+                 CALL        estChifr
+                 BREQ        formErr
+                 ADDX        1,i 
+                 CPX         10,i
+finWh04:         BRNE        while04
+                 LDA         1,i
+                 BR          finValFm
+formErr:         LDA         0,i
+finValFm:        RET0                 
+
+;estChifr()                 
+;retourne 1 en A si le charactere en A est un chiffre, 0 sinon
+estChifr:        CPA         0x0030,i     ;if(A >= 0x0030 && A <= 0x0039){
+                 BRLT        pasChifr     ;   A = 1;
+                 CPA         0x0039,i     ;}else{
+                 BRGT        pasChifr     ;   A = 0
+                 LDA         1,i          ;}
+                 BR          finChifr
+pasChifr:        LDA         0,i
+finChifr:        RET0 
+
+;convertD()
+;Cette methode converti une string yyyy-mm-jj en 3 decimaux (annee, mois, jour)
+input3:          .EQUATE     13
+annee1:          .EQUATE     6
+mois1:           .EQUATE     4
+jour1:           .EQUATE     2
+convertD:        LDX         0,i
+while05:         LDA         0,i          ;while(i < 4){
+                 LDBYTEA     input2,sx    ;   annee += Integer.ParseInt(input[i]);
+                 SUBA        Char2Dec,i   ;   i ++;
+                 ADDA        annee1,s     ;   if(i < 4){
+                 STA         annee1,s     ;       annee *= 10;
+                 ADDX        1,i          ;   }
+                 CPX         4,i          ;}
+                 BREQ        finWh05
+                 ASLA        
+                 STA         annee1,s
+                 ASLA
+                 ASLA
+                 ADDA        annee1,s
+                 STA         annee1,s
+                 BR          while05
+finWh05:         ADDX        1,i          ;i++;
+while06:         LDA         0,i          ;while(i < 7){
+                 LDBYTEA     input2,sx    ;   mois += Integer.ParseInt(input[i]); 
+                 SUBA        Char2Dec,i   ;   i++
+                 ADDA        mois1,s      ;   if(i < 7){
+                 STA         mois1,s      ;       mois *= 10;
+                 ADDX        1,i          ;   }
+                 CPX         7,i          ;}
+                 BREQ        finWh06      
+                 ASLA
+                 STA         mois1,s
+                 ASLA
+                 ASLA        
+                 ADDA        mois1,s
+                 STA         mois1,s
+                 BR          while06
+finWh06:         ADDX        1,i          ;i++;
+while07:         LDA         0,i          ;while(i < 10){
+                 LDBYTEA     input2,sx    ;   jour += Integer.ParseInt(input[i]); 
+                 SUBA        Char2Dec,i   ;   i++
+                 ADDA        jour1,s      ;   if(i < 10){
+                 STA         jour1,s      ;       jour *= 10;
+                 ADDX        1,i          ;   }
+                 CPX         10,i          ;}
+                 BREQ        finWh07      
+                 ASLA
+                 STA         jour1,s
+                 ASLA
+                 ASLA        
+                 ADDA        jour1,s
+                 STA         jour1,s
+                 BR          while07                
+finWh07:         RET0           
+
+
+
+
+
+
+ptr1Date:        .ADDRSS     heap
+hpPtr:           .ADDRSS     heap 
+msgIntro:        .ASCII      "Entrez les dates de 1900-01-01 a 2500-12-31:\n\x00"         
+msgErrIn:        .ASCII      "L'entree n'est pas valide\n\x00"
+heap:            .BLOCK      1
+                 .END
