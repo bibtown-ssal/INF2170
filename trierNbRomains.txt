@@ -3,7 +3,7 @@
 ;(chaque chiffre romain possede au plus 15 characteres, a une valeur entre 1 et 3999 (inclusif)
 ;sinon ils ne seront pas pris en compte
 ;un chiffre romain non valide ne sera pas pris en compte non plus
-;la saisie de plus de 20 lignes cause l'arret du programme 
+;la saisie de plus de 20 lignes de moins de 16 characteres cause l'arret du programme 
 
 ;auteur: Charles Therien
 ;code permanent: THEC03029208
@@ -38,8 +38,8 @@ main:            STRO        msgInp,d
 
 ;saisir()        permet de saisir jusqu'a tailleT(20) ligne de tailleL-1(15) charactere
 ;si une ligne depasse tailleL character, cette ligne sera ignoree
-;si on tente de saisir plus de tailleT(20) lignes, le programme affiche un message d'erreur et
-;s'interrompt
+;si on tente de saisir plus de tailleT(20) lignes de moins de 16 characteres, le programme affiche 
+;un message d'erreur et s'interrompt
 
 char:            .EQUATE     0            ;#1c
 nbChar:          .EQUATE     1            ;#2d
